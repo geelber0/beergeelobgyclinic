@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Clinic Admin - Articles</title>
+<style>
+:root{--bg:#365c9d;--card:#5077b0;--deep:#2a4d85;--btn:#2a78b5;--btn2:#1f5f93;--tint:#e8f0fe;--ink:#1d2f4d}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif}
+body{background:var(--bg);color:#fff;line-height:1.55;padding:18px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:1.6rem;margin-bottom:4px}h2{font-size:1.2rem;margin-bottom:12px}
+.sub{color:#cfe0f7;margin-bottom:18px}
+.box{background:#fff;color:var(--ink);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.box.blue{background:var(--card);color:#fff}
+label{display:block;font-weight:600;margin:12px 0 5px;color:var(--deep)}
+input,textarea{width:100%;font:inherit;padding:11px 13px;border:1px solid #c5d3ea;border-radius:10px;background:var(--tint);color:var(--ink)}
+textarea{min-height:150px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 18px;cursor:pointer;background:var(--btn);color:#fff}
+button:hover{background:var(--btn2)}button.gray{background:#d5deee;color:var(--ink)}button.red{background:#c9503f}
+button.sm{padding:7px 12px;font-size:.88rem}
+button:disabled{opacity:.6;cursor:wait}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.art{display:flex;gap:14px;align-items:center;padding:12px 0;border-top:1px solid #d5deee}
+.art:first-of-type{border-top:0}
+.thumb{width:78px;height:60px;border-radius:10px;background:var(--tint);object-fit:cover;flex:none}
+.art b{display:block}.art small{color:#52627d}
+.art .btns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#msg{position:sticky;top:8px;z-index:9;padding:13px 16px;border-radius:12px;margin-bottom:14px;display:none;font-weight:600}
+#msg.ok{display:block;background:#d8f5e2;color:#14532d}#msg.err{display:block;background:#fde1dd;color:#7f1d1d}#msg.info{display:block;background:#e3eefc;color:#1d3b66}
+label.opt{display:inline-flex;align-items:center;gap:8px;font-weight:500;margin:4px 18px 4px 0;cursor:pointer;color:var(--ink)}
+label.opt input{width:auto;margin:0}
+.hint{color:#52627d;font-size:.92rem;margin-top:6px}
+.thumb.logo{display:grid;place-items:center;background:linear-gradient(135deg,#2a78b5,#5077b0);color:#fff;font-size:.75rem;font-weight:600}
+#prev{max-width:260px;border-radius:12px;margin-top:10px;display:none}
+ol{margin:8px 0 0 20px}li{margin-bottom:4px}
+@media(max-width:600px){.row{grid-template-columns:1fr}.art{flex-wrap:wrap}.art .btns{margin-left:0}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Clinic Admin</h1><p class="sub">Add, edit or remove home page articles. Changes appear on the site in about 1 minute.</p>
+<div id="msg"></div>
+
+<div class="box blue" id="setup">
+  <h2>1. Connect (only once)</h2>
+  <p style="color:#e8f0fe">Create a GitHub access token: GitHub &rarr; your profile picture &rarr; <b>Settings</b> &rarr; <b>Developer settings</b> &rarr; <b>Personal access tokens</b> &rarr; <b>Fine-grained tokens</b> &rarr; <b>Generate new token</b>. Choose <b>Only select repositories</b> (your clinic site), set <b>Contents: Read and write</b>, then copy the token.</p>
+  <label style="color:#fff">GitHub username</label><input id="owner" placeholder="for example: drkhalid">
+  <label style="color:#fff">Repository name</label><input id="repo" placeholder="your clinic site repository">
+  <div class="row"><div><label style="color:#fff">Branch</label><input id="branch" value="main"></div>
+  <div><label style="color:#fff">Access token</label><input id="token" type="password" placeholder="github_pat_..."></div></div>
+  <div class="bar"><button id="connect">Connect</button><button class="gray" id="forget">Disconnect this device</button></div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="box">
+    <h2 id="ftitle">2. New article</h2>
+    <label>Title</label><input id="title">
+    <label>Date</label><input id="date">
+    <label>Article image</label>
+    <div><label class="opt"><input type="radio" name="imgmode" value="logo" checked> Use the clinic logo</label>
+    <label class="opt"><input type="radio" name="imgmode" value="photo"> Upload a photo</label></div>
+    <p class="hint" id="logonote">No photo needed: the clinic logo on a blue background will be shown on this article.</p>
+    <div id="photobox" style="display:none;margin-top:8px"><input id="file" type="file" accept="image/*"></div>
+    <img id="prev" alt="">
+    <label>Article text</label><textarea id="text"></textarea>
+    <div class="bar"><button id="save">Save &amp; publish</button><button class="gray" id="cancel" style="display:none">Cancel edit</button></div>
+  </div>
+  <div class="box"><h2>Published articles</h2><div id="list"></div></div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const store=()=>JSON.parse(localStorage.getItem('bgadmin')||'{}');
+let S=store(), list=[], sha=null, editing=-1, newImg=null, keepImg='';
+const b64=s=>btoa(unescape(encodeURIComponent(s))), unb64=s=>decodeURIComponent(escape(atob(s.replace(/\s/g,''))));
+const msg=(t,c='info')=>{const m=$('msg');m.textContent=t;m.className=c;if(c==='ok')setTimeout(()=>m.className='',9000)};
+const url=p=>`https://api.github.com/repos/${S.owner}/${S.repo}/contents/${p}`;
+const hdr={};
+const gh=(p,method='GET',body)=>fetch(url(p)+(method==='GET'?`?ref=${encodeURIComponent(S.branch)}&t=${Date.now()}`:''),{method,headers:{Authorization:'Bearer '+S.token,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:body&&JSON.stringify(body)});
+const today=()=>new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function load(){
+  msg('Loading articles...');
+  const r=await gh('articles.json');
+  if(r.status===401||r.status===403){msg('The token was refused. Check the token, username and repository name.','err');return false}
+  if(r.status===404){ // file missing: either repo wrong or articles.json not uploaded yet
+    const chk=await fetch(`https://api.github.com/repos/${S.owner}/${S.repo}`,{headers:{Authorization:'Bearer '+S.token}});
+    if(!chk.ok){msg('Repository not found. Check the username and repository name.','err');return false}
+    list=[];sha=null;
+  }else if(r.ok){const d=await r.json();sha=d.sha;list=JSON.parse(unb64(d.content));}
+  else{msg('Could not load (error '+r.status+').','err');return false}
+  $('setup').style.display='none';$('app').style.display='block';render();msg('Connected.','ok');return true;
+}
+function render(){
+  $('list').innerHTML=list.length?list.map((a,i)=>`<div class="art">${a.img?`<img class="thumb" src="/${esc(a.img)}" onerror="this.style.visibility='hidden'">`:'<div class="thumb logo">Logo</div>'}
+  <div><b>${esc(a.title)}</b><small>${esc(a.date)}</small></div>
+  <div class="btns"><button class="sm gray" onclick="mv(${i},-1)">&uarr;</button><button class="sm gray" onclick="mv(${i},1)">&darr;</button><button class="sm" onclick="edit(${i})">Edit</button><button class="sm red" onclick="del(${i})">Delete</button></div></div>`).join(''):'<p style="color:#52627d">No articles yet.</p>';
+}
+const mode=()=>document.querySelector('input[name=imgmode]:checked').value;
+function sync(){const p=mode()==='photo';$('photobox').style.display=p?'block':'none';$('logonote').style.display=p?'none':'block';
+  const src=newImg||(keepImg?'/'+keepImg:'');if(p&&src){$('prev').src=src;$('prev').style.display='block'}else $('prev').style.display='none'}
+function setMode(m){document.querySelector('input[name=imgmode][value='+m+']').checked=true;sync()}
+function resetForm(){editing=-1;newImg=null;keepImg='';['title','text','file'].forEach(k=>$(k).value='');$('date').value=today();setMode('logo');$('ftitle').textContent='2. New article';$('cancel').style.display='none'}
+function edit(i){const a=list[i];editing=i;newImg=null;keepImg=a.img||'';$('title').value=a.title;$('date').value=a.date;$('text').value=a.text;$('file').value='';
+  setMode(a.img?'photo':'logo');
+  $('ftitle').textContent='Editing article';$('cancel').style.display='';scrollTo({top:0,behavior:'smooth'})}
+async function publish(note){
+  const r=await gh('articles.json','PUT',{message:note,content:b64(JSON.stringify(list,null,2)),branch:S.branch,...(sha?{sha}:{})});
+  if(r.status===409||r.status===422){msg('The file changed elsewhere. Reloading, please try again.','err');await load();return false}
+  if(!r.ok){msg('Publishing failed (error '+r.status+').','err');return false}
+  sha=(await r.json()).content.sha;msg('Published! The site updates in about 1 minute.','ok');return true;
+}
+async function save(){
+  const title=$('title').value.trim(),text=$('text').value.trim();
+  if(!title||!text){msg('Please write a title and the article text.','err');return}
+  if(mode()==='photo'&&!newImg&&!keepImg){msg('Please choose a photo, or select "Use the clinic logo".','err');return}
+  $('save').disabled=true;msg('Publishing...');
+  try{
+    let img='';
+    if(mode()==='photo'&&newImg){const path='images/'+Date.now()+'.jpg';
+      const r=await gh(path,'PUT',{message:'Add image',content:newImg.split(',')[1],branch:S.branch});
+      if(!r.ok){msg('Photo upload failed (error '+r.status+').','err');return}
+      img=path;}else if(mode()==='photo')img=keepImg;
+    const art={img,title,date:$('date').value.trim()||today(),text};
+    const old=[...list];
+    if(editing>=0)list[editing]=art;else list.unshift(art);
+    if(await publish((editing>=0?'Edit':'Add')+' article: '+title)){resetForm();render()}else list=old;
+  }catch(e){msg('Error: '+e.message,'err')}finally{$('save').disabled=false}
+}
+async function del(i){if(!confirm('Delete "'+list[i].title+'"?'))return;const old=[...list];list.splice(i,1);if(await publish('Delete article'))render();else list=old}
+async function mv(i,d){const j=i+d;if(j<0||j>=list.length)return;const old=[...list];[list[i],list[j]]=[list[j],list[i]];if(await publish('Reorder articles'))render();else list=old}
+function resize(file){return new Promise(res=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1200/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82))};im.src=URL.createObjectURL(file)})}
+$('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;newImg=await resize(f);sync()});
+document.querySelectorAll('input[name=imgmode]').forEach(r=>r.onchange=sync);
+$('save').onclick=save;$('cancel').onclick=resetForm;
+$('connect').onclick=async()=>{S={owner:$('owner').value.trim(),repo:$('repo').value.trim(),branch:$('branch').value.trim()||'main',token:$('token').value.trim()};
+  if(!S.owner||!S.repo||!S.token){msg('Please fill in username, repository and token.','err');return}
+  localStorage.setItem('bgadmin',JSON.stringify(S));await load()};
+$('forget').onclick=()=>{localStorage.removeItem('bgadmin');S={};location.reload()};
+['owner','repo','branch'].forEach(k=>$(k).value=S[k]||(k==='branch'?'main':''));
+$('date').value=today();
+if(S.token)load();
+</script>
+</body></html>
