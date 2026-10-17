@@ -202,12 +202,9 @@ footer p{margin-bottom:8px;color:var(--tint)}
   <section id="appointment" class="page">
     <div class="title"><h2>Book an Appointment</h2><p>Fill in the form and we will contact you to confirm. No reply in 24 hours? Call 0634026635.</p></div>
     <div class="formcard">
-      <form action="https://formsubmit.co/geelber0@gmail.com" method="POST">
-        <input type="hidden" name="_subject" value="New Appointment Request - Beergeel Clinic">
-        <input type="hidden" name="_captcha" value="false">
-        <input type="hidden" name="_next" value="https://www.beergeelclinic.com/thank-you.html">
-        <input type="hidden" name="_template" value="table">
-        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+      <form id="apptForm" novalidate>
+        <!-- Web3Forms (optional email backup): paste your access key in WEB3FORMS_KEY in the script below -->
+        <input type="checkbox" name="botcheck" id="botcheck" style="display:none" tabindex="-1" autocomplete="off">
         <div class="f"><label for="name">Full Name</label><input id="name" name="Full Name" required></div>
         <div class="f"><label for="age">Age</label><input id="age" name="Age" type="number" min="1" max="120" required></div>
         <div class="f"><label for="sex">Sex</label><select id="sex" name="Sex" required><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></div>
@@ -217,7 +214,8 @@ footer p{margin-bottom:8px;color:var(--tint)}
         <div class="f"><label for="date">Appointment Date</label><input id="date" name="Appointment Date" type="date" required></div>
         <div class="f full"><label for="time">Preferred Time (4 PM - 9 PM)</label><select id="time" name="Appointment Time" required><option value="">Select Time</option><option value="4-5">4:00 PM - 5:00 PM</option><option value="5-6">5:00 PM - 6:00 PM</option><option value="6-7">6:00 PM - 7:00 PM</option><option value="7-8">7:00 PM - 8:00 PM</option><option value="8-9">8:00 PM - 9:00 PM</option></select></div>
         <div class="f full"><label for="reason">Reason for Appointment</label><textarea id="reason" name="Reason for Appointment" rows="4" placeholder="Please describe the reason for your appointment"></textarea></div>
-        <button class="btn" type="submit"><i class="fas fa-paper-plane"></i> Book Appointment</button>
+        <button class="btn" type="submit" id="apptBtn"><i class="fab fa-whatsapp"></i> Book Appointment</button>
+        <p id="apptMsg" style="margin-top:14px;font-weight:600;display:none"></p>
       </form>
     </div>
   </section>
@@ -287,6 +285,38 @@ help.innerHTML=HELP.map(h=>`<div class="help">${h.img?`<div class="pic"><img src
 quick.innerHTML=LINKS.map(l=>`<a href="${E(l.u)}"${ext(l.u)}><i class="${ic(l.i)}"></i><span>${E(l.t)}<small>${E(l.s)}</small></span></a>`).join('');
 flinks.innerHTML=LINKS.map(l=>`<p><a href="${E(l.u)}"${ext(l.u)}>${E(l.t)}</a></p>`).join('');
 soc.innerHTML=SOCIAL.map(s=>`<div class="soc"><i class="${s.i}" style="color:${s.c}"></i><h3>${E(s.t)}</h3><p>${E(s.d)}</p><a class="btn" href="${E(s.u)}" target="_blank" rel="noopener">${E(s.b)}</a></div>`).join('');
+
+/* ================= APPOINTMENT: WhatsApp + Web3Forms ================= */
+const CLINIC_WA="252634026635";            // clinic WhatsApp number (no + or spaces)
+const WEB3FORMS_KEY="";                    // paste your Web3Forms access key here for email backup; leave "" for WhatsApp only
+document.getElementById('apptForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  const f=this, msg=document.getElementById('apptMsg');
+  if(!f.checkValidity()){f.reportValidity();return;}
+  if(f.botcheck.checked)return;
+  const d={};
+  [['Full Name','name'],['Age','age'],['Sex','sex'],['Phone Number','phone'],['Address','address'],['Email','email'],['Appointment Date','date'],['Appointment Time','time'],['Reason for Appointment','reason']]
+   .forEach(([k,id])=>{const el=f.querySelector('#'+id);d[k]=el.tagName==='SELECT'?el.options[el.selectedIndex].text:el.value.trim();});
+  const text="*New Appointment Request - Beergeel Clinic*\n\n"+
+    "Name: "+d['Full Name']+"\nAge: "+d['Age']+"\nSex: "+d['Sex']+"\nPhone: "+d['Phone Number']+
+    "\nAddress: "+d['Address']+(d['Email']?"\nEmail: "+d['Email']:"")+
+    "\nDate: "+d['Appointment Date']+"\nTime: "+d['Appointment Time']+
+    "\nReason: "+(d['Reason for Appointment']||"-");
+  // 1) Email backup via Web3Forms (only if a key is set)
+  if(WEB3FORMS_KEY){
+    fetch('https://api.web3forms.com/submit',{method:'POST',keepalive:true,
+      headers:{'Content-Type':'application/json',Accept:'application/json'},
+      body:JSON.stringify(Object.assign({access_key:WEB3FORMS_KEY,subject:'New Appointment Request - Beergeel Clinic',from_name:'Beergeel Clinic Website'},d))
+    }).catch(()=>{});
+  }
+  // 2) Open WhatsApp with the message pre-filled
+  const url="https://wa.me/"+CLINIC_WA+"?text="+encodeURIComponent(text);
+  const w=window.open(url,'_blank');
+  if(!w)location.href=url;
+  msg.style.display='block';msg.style.color='#0a7a3b';
+  msg.innerHTML='Almost done! Please press <b>Send</b> in WhatsApp to complete your request. If WhatsApp did not open, <a href="'+url+'" target="_blank" rel="noopener">tap here</a>.';
+  f.reset();
+});
 
 // Page switching (works with menu links and #hash)
 function show(){
