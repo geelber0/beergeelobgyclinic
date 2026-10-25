@@ -45,6 +45,9 @@ nav a.portal:hover{background:var(--soft)}
 .btn:hover{background:var(--btn2);transform:translateY(-2px)}
 .btn.white{background:#fff;color:var(--deep)}
 .btn.white:hover{background:var(--soft)}
+.btn.calc{background:var(--btn2);border:2px solid #fff}
+.btn.calc:hover{background:var(--deep)}
+.hero-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
 
 /* Quick links */
 .quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:26px 0 0}
@@ -160,7 +163,10 @@ footer p{margin-bottom:8px;color:var(--tint)}
     <span><i class="fas fa-map-marker-alt"></i>Xero awr kasoo horjeedka Ayuub Restaurant, inyaar ka xiga dhanka Masjid Nuur</span>
     <span><i class="fas fa-phone-alt"></i>Contact: 0634026635 (Mobile/WhatsApp)</span>
   </div>
-  <a href="#appointment" class="btn"><i class="far fa-calendar-plus"></i> Get Appointment Now (Ballan Qabso)</a>
+  <div class="hero-btns">
+    <a href="#appointment" class="btn"><i class="far fa-calendar-plus"></i> Get Appointment Now (Ballan Qabso)</a>
+    <a href="calculator/" class="btn calc"><i class="fas fa-calculator"></i> Sidka xisaabso, uurku intuu le'eg yahay</a>
+  </div>
 </div></div></div>
 
 <main class="container">
@@ -278,6 +284,7 @@ const HELP=[
 /* New links: add a line here to show it in Quick Links and the footer */
 const LINKS=[
  {i:"fa-user-lock",t:"Patient Login",s:"System login (drbeergeelclinic.com)",u:"https://www.drbeergeelclinic.com"},
+ {i:"fa-calculator",t:"Pregnancy Calculator",s:"Xisaabso da'da uurka",u:"calculator/"},
  {i:"fa-calendar-check",t:"Book Appointment",s:"Ballan qabso hada",u:"#appointment"},
  {i:"fab fa-whatsapp",t:"WhatsApp",s:"0634026635",u:"https://wa.me/252634026635"},
  {i:"fa-phone",t:"Call the Clinic",s:"0634026635 / 06510066",u:"tel:+252634026635"}
