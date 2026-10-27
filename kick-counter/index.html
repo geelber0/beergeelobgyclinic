@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kick Counter | Beergeel Clinic</title>
+<meta name="theme-color" content="#2f5597">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kick Counter">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root { --bg1:#2f5597; --bg2:#3a62a3; --blue:#2b79b8; --blue-dark:#215f93; --navy:#1f3d6e; --ink:#1c2a3f; --muted:#5b6b82; --line:#d5e0f1; --soft:#eef4fc; --red:#b3261e; --red-soft:#fdeceb; --red-dark:#8c1d18; --green:#1f7a4d; --green-soft:#e7f5ed; }
+  * { box-sizing:border-box; }
+  html { background:#365d9f; }
+  body { margin:0; padding:16px; padding-top:max(16px,env(safe-area-inset-top)); padding-bottom:max(20px,env(safe-area-inset-bottom)); font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--ink); line-height:1.45; min-height:100vh; }
+  main { max-width:560px; margin:0 auto; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .brand { color:#fff; font-weight:800; font-size:1.05rem; }
+  .lang { display:inline-flex; border:2px solid #fff; border-radius:999px; overflow:hidden; }
+  .lang button { border:0; padding:7px 14px; font-weight:700; font-size:.85rem; font-family:inherit; background:transparent; color:#fff; cursor:pointer; }
+  .lang button[aria-pressed="true"] { background:#fff; color:var(--navy); }
+  .card { background:#fff; border-radius:24px; padding:20px; margin:0 0 14px; box-shadow:0 8px 28px #0b1f4a33; }
+  .movebox { text-align:center; border-radius:18px; background:var(--soft); border:2px solid var(--line); padding:18px 16px 14px; transition:background .2s,border-color .2s; }
+  .movepill { display:inline-block; padding:6px 16px; border-radius:999px; background:var(--navy); color:#fff; font-weight:700; font-size:.9rem; }
+  .movecount { font-size:clamp(4rem,22vw,6rem); font-weight:800; line-height:1.05; color:var(--navy); margin-top:8px; }
+  .movegoal { color:var(--muted); font-size:.95rem; margin-bottom:10px; }
+  .progress { height:12px; border-radius:6px; background:#d9e4f5; overflow:hidden; margin:0 auto 14px; }
+  .progress i { display:block; height:100%; width:0; background:var(--blue); border-radius:6px; transition:width .25s; }
+  .info { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; text-align:left; }
+  .info div { background:#fff; border:1px solid var(--line); border-radius:12px; padding:9px 12px; }
+  .info .k { font-size:.78rem; color:var(--muted); }
+  .info .v { font-weight:700; font-size:1.05rem; }
+  .movebtn { width:100%; min-height:120px; border:0; border-radius:28px; background:var(--blue); color:#fff; font-family:inherit; font-size:clamp(1.6rem,7vw,2.2rem); font-weight:800; cursor:pointer; box-shadow:0 6px 0 var(--blue-dark); touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .movebtn:active { transform:translateY(4px); box-shadow:0 2px 0 var(--blue-dark); }
+  .movelinks { display:flex; gap:10px; justify-content:center; margin-top:6px; }
+  .linkbtn { background:none; border:0; padding:8px; color:var(--muted); font-family:inherit; font-size:.9rem; text-decoration:underline; cursor:pointer; }
+  .msg { margin:12px 0 0; font-weight:700; font-size:.95rem; display:none; }
+  .msg.show { display:block; }
+  /* states */
+  .movebox.done { background:var(--green-soft); border-color:var(--green); }
+  .movebox.done .movecount { color:var(--green); }
+  .movebox.done .progress i { background:var(--green); }
+  .movebox.done .msg { color:var(--green); }
+  .movebox.late { background:var(--red-soft); border-color:var(--red); }
+  .movebox.late .movepill { background:var(--red); }
+  .movebox.late .movecount { color:var(--red); }
+  .movebox.late .progress i { background:var(--red); }
+  .movebox.late .movebtn { background:var(--red); box-shadow:0 6px 0 var(--red-dark); }
+  .movebox.late .msg { color:var(--red); font-size:1.02rem; }
+  h3 { margin:0 0 10px; font-size:1.1rem; color:var(--navy); }
+  .hist { list-style:none; margin:0; padding:0; }
+  .hist li { display:grid; grid-template-columns:1fr auto; gap:2px 10px; align-items:center; padding:10px 0; border-top:1px solid var(--line); }
+  .hist li:first-child { border-top:0; }
+  .hist .d { font-weight:700; }
+  .hist .s { font-size:.85rem; color:var(--muted); }
+  .chip { font-weight:800; font-size:.85rem; padding:5px 12px; border-radius:999px; white-space:nowrap; }
+  .chip.ok { background:var(--green-soft); color:var(--green); }
+  .chip.bad { background:var(--red-soft); color:var(--red); }
+  .chip.run { background:var(--soft); color:var(--blue-dark); }
+  .empty { color:var(--muted); margin:0; }
+  .note { font-size:.88rem; color:var(--muted); margin:0; }
+  .install p { margin:0 0 8px; font-size:.92rem; color:var(--muted); }
+  .install .help { margin-top:10px; padding:12px; background:var(--soft); border-radius:10px; font-size:.92rem; }
+  button.primary { width:100%; border:0; border-radius:10px; padding:14px; font-weight:700; font-size:1rem; font-family:inherit; cursor:pointer; background:var(--blue); color:#fff; }
+  .hidden { display:none !important; }
+  .danger-box { border:2px solid var(--red); background:var(--red-soft); border-radius:12px; padding:12px 14px; font-size:.92rem; }
+  .danger-box strong { color:var(--red); }
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar">
+    <span class="brand">Beergeel Clinic</span>
+    <div class="lang" role="group" aria-label="Language / Luuqad">
+      <button type="button" id="langEn" aria-pressed="true">English</button>
+      <button type="button" id="langSo" aria-pressed="false">Soomaali</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="moveBox" class="movebox">
+      <span class="movepill" id="pill"></span>
+      <div id="moveCount" class="movecount" aria-live="polite">0</div>
+      <div class="movegoal" id="goalTxt"></div>
+      <div class="progress"><i id="bar"></i></div>
+      <div class="info">
+        <div><div class="k" id="kStart"></div><div class="v" id="vStart">–</div></div>
+        <div><div class="k" id="kLeft"></div><div class="v" id="vLeft">–</div></div>
+      </div>
+      <button id="moveBtn" type="button" class="movebtn"></button>
+      <div class="movelinks">
+        <button type="button" class="linkbtn" id="moveUndo"></button>
+        <button type="button" class="linkbtn" id="moveReset"></button>
+      </div>
+      <p class="msg" id="msg" role="alert"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 id="histTitle"></h3>
+    <ul class="hist" id="hist"></ul>
+    <p class="empty" id="histEmpty"></p>
+  </div>
+
+  <div class="card">
+    <div class="danger-box"><strong id="dTitle"></strong><div id="dText"></div></div>
+  </div>
+
+  <div class="card install" id="installBox">
+    <h3 id="iTitle"></h3>
+    <p id="iText"></p>
+    <button type="button" class="primary" id="installBtn"></button>
+    <div id="installHelp" class="help hidden"></div>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var GOAL = 10, WIN = 12 * 3600 * 1000, KEY = 'beergeel_kicks_v2', LKEY = 'beergeel_kick_lang';
+  var $ = function (id) { return document.getElementById(id); };
+
+  var T = {
+    en: {
+      pill:'Count baby movement', btn:'Moved', undo:'Undo last', reset:'Reset today', confirmReset:'Reset today’s count to 0?',
+      goal:'Goal: {n} movements within 12 hours', started:'Started at', left:'Time left',
+      notStarted:'Not started', idle:'Tap the button each time the baby moves. The starting time is saved automatically.',
+      active:'Keep counting. Next day the counter starts again automatically.',
+      done:'Well done! {n} movements reached at {time}.',
+      late:'Fewer than 10 movements in 12 hours. Contact your doctor or go to the clinic right away.',
+      expired:'Time is over', histTitle:'Daily record', histEmpty:'No days recorded yet.',
+      count:'movements', noCount:'Not counted', chipOk:'Reached', chipBad:'Not reached', chipRun:'In progress',
+      startedAt:'Started', reachedAt:'10 reached at',
+      dTitle:'Go to the clinic immediately if', dText:'the baby moves much less than usual or stops moving, or you have headache, blurred vision, bleeding or leaking fluid.',
+      iTitle:'Install as an app', iText:'Save the kick counter on your phone as a separate app.', iBtn:'Install app',
+      helpIos:'On iPhone: tap the Share button, then “Add to Home Screen”.', helpOther:'Open the browser menu (⋮) and choose “Install app” or “Add to Home screen”.',
+      notifTitle:'Kick counter', notifBody:'Fewer than 10 movements in 12 hours. Contact your doctor or go to the clinic now.',
+      months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      days:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+    },
+    so: {
+      pill:'Tiri dhaqaaqa ilmaha', btn:'Wuu dhaqaaqay', undo:'Ka laabo kii ugu dambeeyay', reset:'Maanta ka bilow eber', confirmReset:'Tirada maanta ma ka dhigaa eber?',
+      goal:'Hadaf: {n} dhaqaaq 12 saacadood gudahood', started:'Waxa la bilaabay', left:'Waqtiga harsan',
+      notStarted:'Lama bilaabin', idle:'Badhanka taabo mar kasta oo ilmuhu dhaqaaqo. Saacadda bilowga si toos ah ayaa loo keydinayaa.',
+      active:'Sii tiri. Maalinta xigta tiraynta si toos ah ayay dib u bilaabanaysaa.',
+      done:'Hagaag! {n} dhaqaaq ayaa la gaadhay markii ay ahayd {time}.',
+      late:'Ilmuhu 10 jeer ma dhaqaaqin 12 saacadood gudahood. Isla markiiba la xiriir dhakhtarka ama tag rugta.',
+      expired:'Waqtigii wuu dhamaaday', histTitle:'Diiwaanka maalinlaha ah', histEmpty:'Wali maalin lama diiwaan gelin.',
+      count:'dhaqaaq', noCount:'Lama tirin', chipOk:'Waa la gaadhay', chipBad:'Lama gaadhin', chipRun:'Waa socdaa',
+      startedAt:'Bilowday', reachedAt:'10 waa la gaadhay',
+      dTitle:'Isla markiiba tag rugta haddii', dText:'ilmuhu aad uga yar dhaqaaqo sidii caadiga ahayd ama istaago, ama aad leedahay madax xanuun, araga oo is qarsada, dhiig ama biyo ka imanaya.',
+      iTitle:'U rakib app', iText:'Ku keydi tirinta dhaqaaqa ilmaha taleefankaaga sidii app gaar ah.', iBtn:'Rakib app-ka',
+      helpIos:'iPhone: taabo badhanka Share, kadibna “Add to Home Screen”.', helpOther:'Fur menu-ga browser-ka (⋮) oo dooro “Install app” ama “Add to Home screen”.',
+      notifTitle:'Tirinta dhaqaaqa', notifBody:'Ilmuhu 10 jeer ma dhaqaaqin 12 saacadood gudahood. Hadda la xiriir dhakhtarka ama tag rugta.',
+      months:['Jan','Feb','Mar','Abr','Maajo','Juun','Luul','Ogos','Seb','Okt','Nof','Des'],
+      days:['Axd','Isn','Sal','Arb','Kha','Jim','Sab']
+    }
+  };
+  var lang = 'en';
+  try { var sl = localStorage.getItem(LKEY); if (sl === 'so' || sl === 'en') lang = sl; } catch (e) {}
+
+  /* ---------- storage: { first:'YYYY-MM-DD', sessions:[{start:ms, taps:[ms,...], notified:bool}] } ---------- */
+  var data = { first: '', sessions: [] };
+  function load() {
+    try {
+      var d = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (d && Array.isArray(d.sessions)) data = { first: d.first || '', sessions: d.sessions.filter(function (s) { return s && Array.isArray(s.taps) && s.taps.length && isFinite(s.start); }) };
+    } catch (e) {}
+  }
+  function save() { try { data.sessions = data.sessions.slice(-90); localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function dkey(ms) { var d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function hhmm(ms) { var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function dur(ms) { var m = Math.max(0, Math.ceil(ms / 60000)); return Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm'; }
+  function lastSession() { return data.sessions[data.sessions.length - 1] || null; }
+
+  // status of a session: done (10 reached within 12 h), late (12 h passed without 10), active
+  function status(s, now) {
+    if (s.taps.length >= GOAL && s.taps[GOAL - 1] - s.start <= WIN) return 'done';
+    if (now - s.start >= WIN) return 'late';
+    return 'active';
+  }
+  // the session shown on screen: the latest one, if it belongs to today or is still running
+  function currentSession(now) {
+    var s = lastSession();
+    if (!s) return null;
+    if (dkey(s.start) === dkey(now)) return s;
+    if (status(s, now) === 'active') return s;      // started yesterday evening, still inside its 12 h
+    return null;
+  }
+
+  function tap() {
+    var now = Date.now(), s = currentSession(now);
+    if (!s) { s = { start: now, taps: [], notified: false }; data.sessions.push(s); if (!data.first) data.first = dkey(now); }
+    s.taps.push(now);
+    save(); render();
+    try { navigator.vibrate && navigator.vibrate(30); } catch (e) {}
+    askNotif();
+  }
+  function undo() {
+    var s = currentSession(Date.now());
+    if (!s) return;
+    s.taps.pop();
+    if (!s.taps.length) data.sessions.pop();
+    save(); render();
+  }
+  function resetToday() {
+    var s = currentSession(Date.now());
+    if (!s || !window.confirm(T[lang].confirmReset)) return;
+    data.sessions.pop(); save(); render();
+  }
+
+  /* ---------- alerts ---------- */
+  function askNotif() {
+    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {}
+  }
+  function notifyLate(s) {
+    if (s.notified) return;
+    s.notified = true; save();
+    var t = T[lang];
+    try { navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {}
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready.then(function (r) { r.showNotification(t.notifTitle, { body: t.notifBody, icon: 'icon-192.png', tag: 'kick-late' }); }).catch(function () { new Notification(t.notifTitle, { body: t.notifBody }); });
+        } else new Notification(t.notifTitle, { body: t.notifBody });
+      }
+    } catch (e) {}
+  }
+
+  /* ---------- render ---------- */
+  function fill(str, o) { return str.replace(/\{(\w+)\}/g, function (m, k) { return o[k]; }); }
+  function render() {
+    var t = T[lang], now = Date.now(), s = currentSession(now), st = s ? status(s, now) : 'idle';
+    var n = s ? s.taps.length : 0;
+    $('moveCount').textContent = n;
+    $('bar').style.width = Math.min(100, n / GOAL * 100) + '%';
+    var box = $('moveBox'); box.classList.remove('done', 'late');
+    var msg = $('msg'); msg.classList.add('show');
+    $('vStart').textContent = s ? hhmm(s.start) : '–';
+    if (st === 'done') {
+      box.classList.add('done');
+      msg.textContent = fill(t.done, { n: GOAL, time: hhmm(s.taps[GOAL - 1]) });
+      $('vLeft').textContent = '✓';
+    } else if (st === 'late') {
+      box.classList.add('late');
+      msg.textContent = t.late;
+      $('vLeft').textContent = t.expired;
+      notifyLate(s);
+    } else if (st === 'active') {
+      msg.textContent = t.active;
+      $('vLeft').textContent = dur(s.start + WIN - now);
+    } else {
+      msg.textContent = t.idle;
+      $('vLeft').textContent = '–';
+    }
+    renderHistory(now);
+  }
+
+  function renderHistory(now) {
+    var t = T[lang], list = $('hist'), html = '';
+    if (!data.first) { list.innerHTML = ''; $('histEmpty').style.display = 'block'; return; }
+    var byDay = {};
+    data.sessions.forEach(function (s) { byDay[dkey(s.start)] = s; });
+    var first = data.first.split('-').map(Number), d = new Date(first[0], first[1] - 1, first[2]);
+    var todayKey = dkey(now), rows = [], guard = 0;
+    while (dkey(d.getTime()) <= todayKey && guard++ < 400) {
+      var k = dkey(d.getTime()), s = byDay[k];
+      rows.push({ date: new Date(d.getTime()), key: k, s: s });
+      d.setDate(d.getDate() + 1);
+    }
+    rows.reverse();
+    rows = rows.slice(0, 30);
+    rows.forEach(function (r) {
+      var label = t.days[r.date.getDay()] + ' ' + r.date.getDate() + ' ' + t.months[r.date.getMonth()];
+      var chip, sub, cnt;
+      if (r.s) {
+        var st = status(r.s, now);
+        cnt = r.s.taps.length + ' ' + t.count;
+        sub = t.startedAt + ' ' + hhmm(r.s.start) + (st === 'done' ? ' · ' + t.reachedAt + ' ' + hhmm(r.s.taps[GOAL - 1]) : '');
+        chip = st === 'done' ? '<span class="chip ok">✓ ' + t.chipOk + '</span>' : st === 'late' ? '<span class="chip bad">✗ ' + t.chipBad + '</span>' : '<span class="chip run">' + t.chipRun + '</span>';
+      } else if (r.key === todayKey) {
+        return;                                      // today, not started yet
+      } else {
+        cnt = '0 ' + t.count; sub = t.noCount;
+        chip = '<span class="chip bad">✗ ' + t.chipBad + '</span>';
+      }
+      html += '<li><div><div class="d">' + label + ' — ' + cnt + '</div><div class="s">' + sub + '</div></div>' + chip + '</li>';
+    });
+    list.innerHTML = html;
+    $('histEmpty').style.display = html ? 'none' : 'block';
+  }
+
+  function applyLang() {
+    var t = T[lang];
+    document.documentElement.lang = lang;
+    $('langEn').setAttribute('aria-pressed', lang === 'en'); $('langSo').setAttribute('aria-pressed', lang === 'so');
+    $('pill').textContent = t.pill; $('moveBtn').textContent = t.btn; $('moveUndo').textContent = t.undo; $('moveReset').textContent = t.reset;
+    $('goalTxt').textContent = fill(t.goal, { n: GOAL }); $('kStart').textContent = t.started; $('kLeft').textContent = t.left;
+    $('histTitle').textContent = t.histTitle; $('histEmpty').textContent = t.histEmpty;
+    $('dTitle').textContent = t.dTitle + ':'; $('dText').textContent = t.dText;
+    $('iTitle').textContent = t.iTitle; $('iText').textContent = t.iText; $('installBtn').textContent = t.iBtn;
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    $('installHelp').textContent = ios ? t.helpIos : t.helpOther;
+    render();
+  }
+
+  $('langEn').addEventListener('click', function () { lang = 'en'; try { localStorage.setItem(LKEY, lang); } catch (e) {} applyLang(); });
+  $('langSo').addEventListener('click', function () { lang = 'so'; try { localStorage.setItem(LKEY, lang); } catch (e) {} applyLang(); });
+  $('moveBtn').addEventListener('click', tap);
+  $('moveUndo').addEventListener('click', undo);
+  $('moveReset').addEventListener('click', resetToday);
+  // refresh timer every 30 s, and when the app comes back to the foreground (also handles midnight)
+  setInterval(render, 30000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) render(); });
+
+  /* ---------- install as standalone app ---------- */
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; });
+  window.addEventListener('appinstalled', function () { $('installBox').classList.add('hidden'); });
+  if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) $('installBox').classList.add('hidden');
+  $('installBtn').addEventListener('click', function () {
+    if (deferred) { deferred.prompt(); deferred.userChoice.then(function () { deferred = null; }).catch(function () {}); }
+    else $('installHelp').classList.remove('hidden');
+  });
+  try { if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function () {}); } catch (e) {}
+
+  load();
+  applyLang();
+})();
+</script>
+</body>
+</html>
