@@ -329,6 +329,16 @@
   });
   try { if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function () {}); } catch (e) {}
 
+  // opened from the calculator's "Download as a separate app" link: bring the install card into view
+  try {
+    if (/[?&]install=1/.test(location.search) && !$('installBox').classList.contains('hidden')) {
+      setTimeout(function () {
+        $('installBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        $('installBox').style.boxShadow = '0 0 0 4px #ffd34d';
+      }, 400);
+    }
+  } catch (e) {}
+
   load();
   applyLang();
 })();

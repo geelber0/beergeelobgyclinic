@@ -300,6 +300,7 @@
         <div id="kHist" class="ktblwrap"></div>
       </div>
       <a class="klink" href="kick-counter/" id="kStandalone"></a>
+      <a class="klink" href="kick-counter/?install=1" id="kInstall"></a>
     </div>
 
     <p id="savedMsg" class="savedmsg noprint hidden" data-i18n="savedMsg"></p>
@@ -412,7 +413,7 @@
       kIdle:'Tap the button each time the baby moves. The starting time is saved automatically.', kActive:'Keep counting. Next day the counter starts again automatically.',
       kDone:'Well done! {n} movements reached at {time}.', kLate:'Fewer than 10 movements in 12 hours. Contact your doctor or go to the clinic right away.',
       kHistTitle:'Daily record', kHistEmpty:'No days recorded yet.', kCount:'movements', kNoCount:'Not counted', kChipOk:'Reached', kChipBad:'Not reached', kChipRun:'In progress',
-      kStartedAt:'Started', kColDate:'Date', kColStart:'Start time', kColEnd:'End time', kColCount:'Counts', kReachedAt:'10 reached at', kStandalone:'Open the kick counter as a separate app',
+      kStartedAt:'Started', kColDate:'Date', kColStart:'Start time', kColEnd:'End time', kColCount:'Counts', kReachedAt:'10 reached at', kStandalone:'Open the kick counter as a separate app', kInstall:'Download the kick counter as a separate app',
       kDays:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
       errName:'Please enter the patient name.',
       errAssess:'Please enter the assessment date.',
@@ -487,7 +488,7 @@
       kIdle:'Badhanka taabo mar kasta oo ilmuhu dhaqaaqo. Saacadda bilowga si toos ah ayaa loo keydinayaa.', kActive:'Sii tiri. Maalinta xigta tiraynta si toos ah ayay dib u bilaabanaysaa.',
       kDone:'Hagaag! {n} dhaqaaq ayaa la gaadhay markii ay ahayd {time}.', kLate:'Ilmuhu 10 jeer ma dhaqaaqin 12 saacadood gudahood. Isla markiiba la xiriir dhakhtarka ama tag rugta.',
       kHistTitle:'Diiwaanka maalinlaha ah', kHistEmpty:'Wali maalin lama diiwaan gelin.', kCount:'dhaqaaq', kNoCount:'Lama tirin', kChipOk:'Waa la gaadhay', kChipBad:'Lama gaadhin', kChipRun:'Waa socdaa',
-      kStartedAt:'Bilowday', kColDate:'Taariikh', kColStart:'Waqtiga bilowga', kColEnd:'Waqtiga dhamaadka', kColCount:'Tirada', kReachedAt:'10 waa la gaadhay', kStandalone:'Fur tirinta dhaqaaqa sidii app gaar ah',
+      kStartedAt:'Bilowday', kColDate:'Taariikh', kColStart:'Waqtiga bilowga', kColEnd:'Waqtiga dhamaadka', kColCount:'Tirada', kReachedAt:'10 waa la gaadhay', kStandalone:'Fur tirinta dhaqaaqa sidii app gaar ah', kInstall:'Rakib tirinta dhaqaaqa sidii app gaar ah',
       kDays:['Axd','Isn','Sal','Arb','Kha','Jim','Sab'],
       errName:'Fadlan geli magaca bukaanka.',
       errAssess:'Fadlan geli taariikhda xisaabinta.',
@@ -645,7 +646,7 @@
     $('kBar').style.width = Math.min(100, n / K_GOAL * 100) + '%';
     $('kGoal').textContent = t.kGoal.replace('{n}', K_GOAL);
     $('kStartK').textContent = t.kStarted; $('kLeftK').textContent = t.kLeft; $('kHistTitle').textContent = t.kHistTitle;
-    $('kStandalone').textContent = t.kStandalone;
+    $('kStandalone').textContent = t.kStandalone; $('kInstall').textContent = t.kInstall;
     $('kStartV').textContent = s ? khhmm(s.start) : '–';
     const box = $('moveBox'); box.classList.remove('done', 'late');
     if (st === 'done') { box.classList.add('done'); $('kMsg').textContent = t.kDone.replace('{n}', K_GOAL).replace('{time}', khhmm(s.taps[K_GOAL - 1])); $('kLeftV').textContent = '✓'; }
