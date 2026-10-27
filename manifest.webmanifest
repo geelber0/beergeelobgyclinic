@@ -1,31 +1,17 @@
 {
-  "name": "Beergeel Pregnancy Calculator",
-  "short_name": "Pregnancy Calc",
-  "description": "Pregnancy dating calculator and kick counter",
-  "start_url": "./",
+  "name": "Beergeel Pregnancy Dating Calculator",
+  "short_name": "Beergeel",
+  "description": "Pregnancy dating calculator by Beergeel Obstetrics and Gynecology Clinic",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#2f5597",
   "theme_color": "#2f5597",
+  "lang": "en",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
