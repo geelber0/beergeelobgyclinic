@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Kick Counter">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
+<script>window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;});</script>
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -64,6 +65,8 @@
   .empty { color:var(--muted); margin:0; }
   .note { font-size:.88rem; color:var(--muted); margin:0; }
   .install p { margin:0 0 8px; font-size:.92rem; color:var(--muted); }
+  .install { border:2px solid var(--blue); }
+  .install h3 { margin:0 0 4px; }
   .install .help { margin-top:10px; padding:12px; background:var(--soft); border-radius:10px; font-size:.92rem; }
   button.primary { width:100%; border:0; border-radius:10px; padding:14px; font-weight:700; font-size:1rem; font-family:inherit; cursor:pointer; background:var(--blue); color:#fff; }
   .hidden { display:none !important; }
@@ -79,6 +82,13 @@
       <button type="button" id="langEn" aria-pressed="true">English</button>
       <button type="button" id="langSo" aria-pressed="false">Soomaali</button>
     </div>
+  </div>
+
+  <div class="card install" id="installBox">
+    <h3 id="iTitle"></h3>
+    <p id="iText"></p>
+    <button type="button" class="primary" id="installBtn"></button>
+    <div id="installHelp" class="help hidden"></div>
   </div>
 
   <div class="card">
@@ -110,12 +120,6 @@
     <div class="danger-box"><strong id="dTitle"></strong><div id="dText"></div></div>
   </div>
 
-  <div class="card install" id="installBox">
-    <h3 id="iTitle"></h3>
-    <p id="iText"></p>
-    <button type="button" class="primary" id="installBtn"></button>
-    <div id="installHelp" class="help hidden"></div>
-  </div>
 </main>
 
 <script>
@@ -136,7 +140,7 @@
       count:'movements', noCount:'Not counted', chipOk:'Reached', chipBad:'Not reached', chipRun:'In progress',
       startedAt:'Started', reachedAt:'10 reached at',
       dTitle:'Go to the clinic immediately if', dText:'the baby moves much less than usual or stops moving, or you have headache, blurred vision, bleeding or leaking fluid.',
-      iTitle:'Install as an app', iText:'Save the kick counter on your phone as a separate app.', iBtn:'Install app',
+      iTitle:'Save as a separate app', iText:'Save the kick counter on your phone as a separate app.', iBtn:'Save app to home screen',
       helpIos:'On iPhone: tap the Share button, then “Add to Home Screen”.', helpOther:'Open the browser menu (⋮) and choose “Install app” or “Add to Home screen”.',
       notifTitle:'Kick counter', notifBody:'Fewer than 10 movements in 12 hours. Contact your doctor or go to the clinic now.',
       months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -153,7 +157,7 @@
       count:'dhaqaaq', noCount:'Lama tirin', chipOk:'Waa la gaadhay', chipBad:'Lama gaadhin', chipRun:'Waa socdaa',
       startedAt:'Bilowday', reachedAt:'10 waa la gaadhay',
       dTitle:'Isla markiiba tag rugta haddii', dText:'ilmuhu aad uga yar dhaqaaqo sidii caadiga ahayd ama istaago, ama aad leedahay madax xanuun, araga oo is qarsada, dhiig ama biyo ka imanaya.',
-      iTitle:'U rakib app', iText:'Ku keydi tirinta dhaqaaqa ilmaha taleefankaaga sidii app gaar ah.', iBtn:'Rakib app-ka',
+      iTitle:'U rakib app', iText:'Ku keydi tirinta dhaqaaqa ilmaha taleefankaaga sidii app gaar ah.', iBtn:'Ku keydi app-ka shaashadda hore',
       helpIos:'iPhone: taabo badhanka Share, kadibna “Add to Home Screen”.', helpOther:'Fur menu-ga browser-ka (⋮) oo dooro “Install app” ama “Add to Home screen”.',
       notifTitle:'Tirinta dhaqaaqa', notifBody:'Ilmuhu 10 jeer ma dhaqaaqin 12 saacadood gudahood. Hadda la xiriir dhakhtarka ama tag rugta.',
       months:['Jan','Feb','Mar','Abr','Maajo','Juun','Luul','Ogos','Seb','Okt','Nof','Des'],
@@ -194,8 +198,9 @@
   }
 
   function tap() {
-    var now = Date.now(), s = currentSession(now);
-    if (!s) { s = { start: now, taps: [], notified: false }; data.sessions.push(s); if (!data.first) data.first = dkey(now); }
+    var now = Date.now(), s = lastSession();
+    // a count lasts 12 hours from its first tap; after that the next tap starts a new count from zero (same date or not)
+    if (!s || now - s.start >= WIN) { s = { start: now, taps: [], notified: false }; data.sessions.push(s); if (!data.first) data.first = dkey(now); }
     s.taps.push(now);
     save(); render();
     try { navigator.vibrate && navigator.vibrate(30); } catch (e) {}
@@ -265,12 +270,13 @@
     var t = T[lang], list = $('hist'), html = '';
     if (!data.first) { list.innerHTML = ''; $('histEmpty').style.display = 'block'; return; }
     var byDay = {};
-    data.sessions.forEach(function (s) { byDay[dkey(s.start)] = s; });
+    data.sessions.forEach(function (s) { var k = dkey(s.start); (byDay[k] = byDay[k] || []).push(s); });
     var first = data.first.split('-').map(Number), d = new Date(first[0], first[1] - 1, first[2]);
     var todayKey = dkey(now), rows = [], guard = 0;
     while (dkey(d.getTime()) <= todayKey && guard++ < 400) {
-      var k = dkey(d.getTime()), s = byDay[k];
-      rows.push({ date: new Date(d.getTime()), key: k, s: s });
+      var k = dkey(d.getTime());
+      if (byDay[k]) byDay[k].forEach(function (s) { rows.push({ date: new Date(d.getTime()), key: k, s: s }); });
+      else rows.push({ date: new Date(d.getTime()), key: k, s: undefined });
       d.setDate(d.getDate() + 1);
     }
     rows.reverse();
@@ -324,7 +330,8 @@
   window.addEventListener('appinstalled', function () { $('installBox').classList.add('hidden'); });
   if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) $('installBox').classList.add('hidden');
   $('installBtn').addEventListener('click', function () {
-    if (deferred) { deferred.prompt(); deferred.userChoice.then(function () { deferred = null; }).catch(function () {}); }
+    var ev = deferred || window.__bip;
+    if (ev) { ev.prompt(); ev.userChoice.then(function () { deferred = null; window.__bip = null; }).catch(function () {}); }
     else $('installHelp').classList.remove('hidden');
   });
   try { if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function () {}); } catch (e) {}
