@@ -1,5 +1,5 @@
 // Beergeel calculator: lets the app open offline once it has been loaded.
-const CACHE = 'beergeel-calc-v4';
+const CACHE = 'beergeel-calc-v5';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './fetal-chart.jpg'];
 
 self.addEventListener('install', e => {
